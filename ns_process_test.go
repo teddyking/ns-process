@@ -29,7 +29,7 @@ var _ = Describe("The ns-process CLI", func() {
 		stdout = gbytes.NewBuffer()
 
 		stdinWriter := bufio.NewWriter(stdin)
-		stdinWriter.WriteString("readlink /proc/self/ns/uts")
+		stdinWriter.WriteString("ls -lah /proc/self/ns")
 		stdinWriter.Flush()
 		Expect(stdin.Close()).To(Succeed())
 	})
@@ -49,8 +49,12 @@ var _ = Describe("The ns-process CLI", func() {
 		Eventually(session).Should(gexec.Exit(0))
 	})
 
-	It("starts a /bin/sh process in a new UTS namespace", func() {
-		currentUTSInode := inode("self", "uts")
-		Consistently(stdout).ShouldNot(gbytes.Say(currentUTSInode))
+	It("starts a /bin/sh process in a new set of namespaces", func() {
+		namespaces := []string{"mnt", "uts", "ipc", "pid", "net", "user"}
+
+		for _, namespace := range namespaces {
+			currentInode := inode("self", namespace)
+			Consistently(stdout).ShouldNot(gbytes.Say(currentInode))
+		}
 	})
 })
