@@ -4,6 +4,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"fmt"
+	"os"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/onsi/gomega/gexec"
@@ -25,4 +29,18 @@ func TestNsProcess(t *testing.T) {
 
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "ns-process")
+}
+
+func inode(pid, namespaceType string) string {
+	namespace, err := os.Readlink(fmt.Sprintf("/proc/%s/ns/%s", pid, namespaceType))
+	Expect(err).NotTo(HaveOccurred())
+
+	requiredFormat := regexp.MustCompile(`^\w+:\[\d+\]$`)
+	Expect(requiredFormat.MatchString(namespace)).To(BeTrue())
+
+	namespace = strings.Split(namespace, ":")[1]
+	namespace = namespace[1:]
+	namespace = namespace[:len(namespace)-1]
+
+	return namespace
 }
