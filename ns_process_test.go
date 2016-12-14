@@ -66,17 +66,23 @@ var _ = Describe("The ns-process CLI", func() {
 		})
 	})
 
-	Describe("user namespace configuration", func() {
-		BeforeEach(func() {
-			cmdToRunInNamespacedShell = "id"
+	Describe("namespace setup and configuration", func() {
+		It("runs the nsInitialisation func before starting the /bin/sh process", func() {
+			Eventually(stdout).Should(gbytes.Say("namespace setup code goes here"))
 		})
 
-		It("applies a UID mapping", func() {
-			Eventually(stdout).Should(gbytes.Say(`uid=0\(root\)`))
-		})
+		Describe("user namespace", func() {
+			BeforeEach(func() {
+				cmdToRunInNamespacedShell = "id"
+			})
 
-		It("applies a GID mapping", func() {
-			Eventually(stdout).Should(gbytes.Say(`gid=0\(root\)`))
+			It("applies a UID mapping", func() {
+				Eventually(stdout).Should(gbytes.Say(`uid=0\(root\)`))
+			})
+
+			It("applies a GID mapping", func() {
+				Eventually(stdout).Should(gbytes.Say(`gid=0\(root\)`))
+			})
 		})
 	})
 })
