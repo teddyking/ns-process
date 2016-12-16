@@ -14,7 +14,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("The ns-process CLI", func() {
+var _ = Describe("ns-process", func() {
 	var (
 		command                   *exec.Cmd
 		args                      []string
