@@ -15,6 +15,7 @@ import (
 var _ = Describe("The ns-process CLI", func() {
 	var (
 		command                   *exec.Cmd
+		args                      []string
 		session                   *gexec.Session
 		stdin                     io.WriteCloser
 		cmdToRunInNamespacedShell string
@@ -22,17 +23,17 @@ var _ = Describe("The ns-process CLI", func() {
 	)
 
 	BeforeEach(func() {
-		var err error
-
-		command = exec.Command(pathToNsProcessCLI)
-		stdin, err = command.StdinPipe()
-		Expect(err).NotTo(HaveOccurred())
-		stdout = gbytes.NewBuffer()
+		args = []string{"-rootfs", rootfsFilepath}
 		cmdToRunInNamespacedShell = "true"
 	})
 
 	JustBeforeEach(func() {
 		var err error
+
+		command = exec.Command(pathToNsProcessCLI, args...)
+		stdin, err = command.StdinPipe()
+		Expect(err).NotTo(HaveOccurred())
+		stdout = gbytes.NewBuffer()
 
 		stdinWriter := bufio.NewWriter(stdin)
 		stdinWriter.WriteString(cmdToRunInNamespacedShell)
@@ -45,10 +46,6 @@ var _ = Describe("The ns-process CLI", func() {
 
 	AfterEach(func() {
 		Expect(stdout.Close()).To(Succeed())
-	})
-
-	It("exits with a 0 exit code", func() {
-		Eventually(session).Should(gexec.Exit(0))
 	})
 
 	Describe("cloning namespaces", func() {
@@ -83,6 +80,32 @@ var _ = Describe("The ns-process CLI", func() {
 			It("applies a GID mapping", func() {
 				Eventually(stdout).Should(gbytes.Say(`gid=0\(root\)`))
 			})
+		})
+	})
+
+	Context("when the rootfs directory does not exist", func() {
+		BeforeEach(func() {
+			args = []string{"-rootfs", "/does/not/exist"}
+		})
+
+		It("exits with a 1 exit code", func() {
+			Eventually(session).Should(gexec.Exit(1))
+		})
+
+		It("provides a helpful error message", func() {
+			usefulErrorMsg := `
+"/does/not/exist" does not exist.
+Please create this directory and unpack a suitable root filesystem inside it.
+An example rootfs, BusyBox, can be downloaded from:
+
+https://raw.githubusercontent.com/teddyking/ns-process/4.0/assets/busybox.tar
+
+And unpacked by:
+
+mkdir -p /does/not/exist
+tar -C /does/not/exist -xf busybox.tar
+`
+			Eventually(stdout).Should(gbytes.Say(usefulErrorMsg))
 		})
 	})
 })

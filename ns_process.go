@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -36,7 +37,33 @@ func nsRun() {
 	}
 }
 
+func checkRootfs() {
+	var rootfsPath string
+
+	flag.StringVar(&rootfsPath, "rootfs", "/tmp/ns-process/rootfs", "Path to the rootfs to use")
+	flag.Parse()
+
+	if _, err := os.Stat(rootfsPath); os.IsNotExist(err) {
+		usefulErrorMsg := fmt.Sprintf(`
+"%s" does not exist.
+Please create this directory and unpack a suitable root filesystem inside it.
+An example rootfs, BusyBox, can be downloaded from:
+
+https://raw.githubusercontent.com/teddyking/ns-process/4.0/assets/busybox.tar
+
+And unpacked by:
+
+mkdir -p %s
+tar -C %s -xf busybox.tar
+`, rootfsPath, rootfsPath, rootfsPath)
+		fmt.Println(usefulErrorMsg)
+		os.Exit(1)
+	}
+}
+
 func main() {
+	checkRootfs()
+
 	cmd := reexec.Command("nsInitialisation")
 
 	cmd.Stdin = os.Stdin
