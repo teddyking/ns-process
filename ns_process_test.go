@@ -6,7 +6,9 @@ import (
 
 	"bufio"
 	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -53,7 +55,8 @@ var _ = Describe("The ns-process CLI", func() {
 			cmdToRunInNamespacedShell = "ls -lah /proc/self/ns"
 		})
 
-		It("starts a /bin/sh process in a new set of namespaces", func() {
+		// TODO: unpend this test once we have a /proc again
+		PIt("starts /bin/sh in a new set of namespaces", func() {
 			namespaces := []string{"mnt", "uts", "ipc", "pid", "net", "user"}
 
 			for _, namespace := range namespaces {
@@ -64,10 +67,6 @@ var _ = Describe("The ns-process CLI", func() {
 	})
 
 	Describe("namespace setup and configuration", func() {
-		It("runs the nsInitialisation func before starting the /bin/sh process", func() {
-			Eventually(stdout).Should(gbytes.Say("namespace setup code goes here"))
-		})
-
 		Describe("user namespace", func() {
 			BeforeEach(func() {
 				cmdToRunInNamespacedShell = "id"
@@ -79,6 +78,27 @@ var _ = Describe("The ns-process CLI", func() {
 
 			It("applies a GID mapping", func() {
 				Eventually(stdout).Should(gbytes.Say(`gid=0\(root\)`))
+			})
+		})
+
+		Describe("mount namespace", func() {
+			BeforeEach(func() {
+				_, err := os.Create(filepath.Join(rootfsFilepath, "in-newroot"))
+				Expect(err).NotTo(HaveOccurred())
+				cmdToRunInNamespacedShell = "ls && pwd"
+			})
+
+			AfterEach(func() {
+				Expect(os.Remove(filepath.Join(rootfsFilepath, "in-newroot"))).To(Succeed())
+			})
+
+			It("starts /bin/sh with a new root filesystem", func() {
+				Eventually(stdout).Should(gbytes.Say("in-newroot"))
+			})
+
+			It("sets / for /bin/sh to the new root filesystem", func() {
+				Consistently(stdout).ShouldNot(gbytes.Say("/.pivot_root"))
+				Eventually(stdout).Should(gbytes.Say("/"))
 			})
 		})
 	})
