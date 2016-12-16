@@ -55,8 +55,7 @@ var _ = Describe("ns-process", func() {
 			cmdToRunInNamespacedShell = "ls -lah /proc/self/ns"
 		})
 
-		// TODO: unpend this test once we have a /proc again
-		PIt("starts /bin/sh in a new set of namespaces", func() {
+		It("starts /bin/sh in a new set of namespaces", func() {
 			namespaces := []string{"mnt", "uts", "ipc", "pid", "net", "user"}
 
 			for _, namespace := range namespaces {
@@ -85,7 +84,7 @@ var _ = Describe("ns-process", func() {
 			BeforeEach(func() {
 				_, err := os.Create(filepath.Join(rootfsFilepath, "in-newroot"))
 				Expect(err).NotTo(HaveOccurred())
-				cmdToRunInNamespacedShell = "ls && pwd"
+				cmdToRunInNamespacedShell = "ls && pwd && mount"
 			})
 
 			AfterEach(func() {
@@ -99,6 +98,10 @@ var _ = Describe("ns-process", func() {
 			It("sets / for /bin/sh to the new root filesystem", func() {
 				Consistently(stdout).ShouldNot(gbytes.Say("/.pivot_root"))
 				Eventually(stdout).Should(gbytes.Say("/"))
+			})
+
+			It("mounts /proc", func() {
+				Eventually(stdout).Should(gbytes.Say("proc on /proc type proc"))
 			})
 		})
 	})

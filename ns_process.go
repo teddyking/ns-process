@@ -20,6 +20,11 @@ func init() {
 func nsInitialisation() {
 	newrootPath := os.Args[1]
 
+	if err := mountProc(newrootPath); err != nil {
+		fmt.Printf("Error mounting /proc - %s\n", err)
+		os.Exit(1)
+	}
+
 	if err := pivotRoot(newrootPath); err != nil {
 		fmt.Printf("Error running pivot_root - %s\n", err)
 		os.Exit(1)
