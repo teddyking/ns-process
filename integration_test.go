@@ -104,6 +104,22 @@ var _ = Describe("ns-process", func() {
 				Eventually(stdout).Should(gbytes.Say("proc on /proc type proc"))
 			})
 		})
+
+		Describe("network namespace", func() {
+			BeforeEach(func() {
+				// 10.10.10.1 is the default IP address of the bridge assigned by netsetgo
+				cmdToRunInNamespacedShell = "ip addr && ping -c 1 -W 1 10.10.10.1"
+			})
+
+			It("assigns an interface/IP address", func() {
+				// 10.10.10.2 is the default IP address assigned by netsetgo
+				Eventually(stdout).Should(gbytes.Say("inet 10.10.10.2/24 scope global veth1"))
+			})
+
+			It("is able to ping the gateway", func() {
+				Eventually(stdout).Should(gbytes.Say("1 packets transmitted, 1 packets received, 0% packet loss"))
+			})
+		})
 	})
 
 	Context("when the rootfs directory does not exist", func() {
@@ -127,6 +143,27 @@ And unpacked by:
 
 mkdir -p /does/not/exist
 tar -C /does/not/exist -xf busybox.tar
+`
+			Eventually(stdout).Should(gbytes.Say(usefulErrorMsg))
+		})
+	})
+
+	Context("when netsetgo does not exist", func() {
+		BeforeEach(func() {
+			args = append(args, "-netsetgo", "/does/not/exist")
+		})
+
+		It("provides a helpful error message", func() {
+			usefulErrorMsg := `
+Unable to find the netsetgo binary at "/does/not/exist".
+netsetgo is an external binary used to configure networking.
+You must download netsetgo, chown it to the root user and apply the setuid bit.
+This can be done as follows:
+
+wget "https://github.com/teddyking/netsetgo/releases/download/0.0.1/netsetgo"
+sudo mv netsetgo /usr/local/bin/
+sudo chown root:root /usr/local/bin/netsetgo
+sudo chmod 4755 /usr/local/bin/netsetgo
 `
 			Eventually(stdout).Should(gbytes.Say(usefulErrorMsg))
 		})

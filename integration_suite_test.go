@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/onsi/gomega/gexec"
 )
@@ -36,12 +37,23 @@ func TestNsProcess(t *testing.T) {
 		Expect(os.MkdirAll(rootfsFilepath, 0755)).To(Succeed())
 
 		untar(busyboxTarFilepath, rootfsFilepath)
+
+		// check for netsetgo
+		checkNetsetgo()
+	})
+
+	AfterEach(func() {
+		// allow time for various network operations to complete between tests
+		// super gross hack I know, but the tests here are very simplified and
+		// really serve only to support a basic TDD workflow
+		time.Sleep(time.Second / 2)
 	})
 
 	AfterSuite(func() {
 		gexec.CleanupBuildArtifacts()
 	})
 
+	SetDefaultEventuallyTimeout(time.Second * 5)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "ns-process")
 }
@@ -64,4 +76,9 @@ func untar(src, dst string) {
 	// use tar command for sake of simplicity
 	untarCmd := exec.Command("tar", "-C", dst, "-xf", src)
 	Expect(untarCmd.Run()).To(Succeed())
+}
+
+func checkNetsetgo() {
+	_, err := exec.LookPath("netsetgo")
+	Expect(err).NotTo(HaveOccurred())
 }
