@@ -66,12 +66,9 @@ func exitIfRootfsNotFound(rootfsPath string) {
 		usefulErrorMsg := fmt.Sprintf(`
 "%s" does not exist.
 Please create this directory and unpack a suitable root filesystem inside it.
-An example rootfs, BusyBox, can be downloaded from:
+An example rootfs, BusyBox, can be downloaded and unpacked as follows:
 
-https://raw.githubusercontent.com/teddyking/ns-process/4.0/assets/busybox.tar
-
-And unpacked by:
-
+wget "https://raw.githubusercontent.com/teddyking/ns-process/4.0/assets/busybox.tar"
 mkdir -p %s
 tar -C %s -xf busybox.tar
 `, rootfsPath, rootfsPath, rootfsPath)

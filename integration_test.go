@@ -135,12 +135,9 @@ var _ = Describe("ns-process", func() {
 			usefulErrorMsg := `
 "/does/not/exist" does not exist.
 Please create this directory and unpack a suitable root filesystem inside it.
-An example rootfs, BusyBox, can be downloaded from:
+An example rootfs, BusyBox, can be downloaded and unpacked as follows:
 
-https://raw.githubusercontent.com/teddyking/ns-process/4.0/assets/busybox.tar
-
-And unpacked by:
-
+wget "https://raw.githubusercontent.com/teddyking/ns-process/4.0/assets/busybox.tar"
 mkdir -p /does/not/exist
 tar -C /does/not/exist -xf busybox.tar
 `
