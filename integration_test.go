@@ -120,6 +120,19 @@ var _ = Describe("ns-process", func() {
 				Eventually(stdout).Should(gbytes.Say("1 packets transmitted, 1 packets received, 0% packet loss"))
 			})
 		})
+
+		Describe("uts namespace", func() {
+			BeforeEach(func() {
+				cmdToRunInNamespacedShell = "hostname"
+			})
+
+			It("does not use the host's hostname", func() {
+				hostsHostname, err := os.Hostname()
+				Expect(err).NotTo(HaveOccurred())
+
+				Consistently(stdout).ShouldNot(gbytes.Say(hostsHostname))
+			})
+		})
 	})
 
 	Context("when the rootfs directory does not exist", func() {

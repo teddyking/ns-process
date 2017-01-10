@@ -30,6 +30,11 @@ func nsInitialisation() {
 		os.Exit(1)
 	}
 
+	if err := syscall.Sethostname([]byte("ns-process")); err != nil {
+		fmt.Printf("Error setting hostname - %s\n", err)
+		os.Exit(1)
+	}
+
 	if err := waitForNetwork(); err != nil {
 		fmt.Printf("Error waiting for network - %s\n", err)
 		os.Exit(1)
